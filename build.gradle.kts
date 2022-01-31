@@ -5,7 +5,7 @@ plugins {
     application
 }
 
-group = "me.corit"
+group = "me.corite"
 version = "1.0-SNAPSHOT"
 
 repositories {

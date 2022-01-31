@@ -3,8 +3,8 @@ import kotlin.math.nextUp
 @ExperimentalUnsignedTypes
 class SHA1 {
 
-    fun hash(message:UByteArray):UByteArray {
-        val blocks = preprocess(message)
+    fun hash(bytes:UByteArray):UByteArray {
+        val blocks = preprocess(bytes)
 
         val h0 = "67452301".toUInt(16)
         val h1 = "EFCDAB89".toUInt(16)
@@ -18,6 +18,13 @@ class SHA1 {
         }
 
         return getBytes(h0)+getBytes(h1)+getBytes(h2)+getBytes(h3)+getBytes(h4)
+    }
+
+    fun hashToString(bytes: UByteArray):String {
+        val hashedBytes = hash(bytes)
+
+        return hashedBytes.joinToString("") { padHex(it.toString(16), 2) }
+
     }
 
     private fun processBlock(bytes: UByteArray, h:UIntArray):UIntArray {
@@ -77,9 +84,9 @@ class SHA1 {
     }
 
     private fun getWordsFromBytes(bytes:UByteArray):UIntArray {
-        val words = UIntArray(16)
-        for (i in 0 until 16 ) {
-            val chunk = bytes.copyOfRange(i*16, (i+1)*16)
+        val words = UIntArray(bytes.size/4)
+        for (i in words.indices) {
+            val chunk = bytes.copyOfRange(i*4, (i+1)*4)
             words[i] = getWord(chunk)
         }
         return words

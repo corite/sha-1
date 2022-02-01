@@ -17,13 +17,13 @@ class SHA1 {
             h = processBlock(block, h)
         }
 
-        return getBytes(h0)+getBytes(h1)+getBytes(h2)+getBytes(h3)+getBytes(h4)
+        return getBytes(h[0])+getBytes(h[1])+getBytes(h[2])+getBytes(h[3])+getBytes(h[4])
     }
 
     fun hashToString(bytes: UByteArray):String {
         val hashedBytes = hash(bytes)
 
-        return hashedBytes.joinToString("") { padHex(it.toString(16), 2) }
+        return hashedBytes.joinToString("") { padWithZeros(it.toString(16), 2) }
 
     }
 
@@ -33,7 +33,7 @@ class SHA1 {
         val words = getWordsFromBytes(bytes)
         val extendedWords = words+UIntArray(80 - 16)
         for (i in 16 until 80) {
-            extendedWords[i] = leftRotate(extendedWords[i-3] xor extendedWords[i-8] xor extendedWords[i-14] xor extendedWords[i-16])
+            extendedWords[i] =(extendedWords[i-3] xor extendedWords[i-8] xor extendedWords[i-14] xor extendedWords[i-16]) rotl 1
         }
 
         var (a,b,c,d,e) = arrayOf(h0,h1,h2,h3,h4)
@@ -54,10 +54,10 @@ class SHA1 {
                 f = b xor c xor d
                 k = "CA62C1D6".toUInt(16)
             }
-            val tmp = leftRotate(a,5) + f + e + k +extendedWords[i]
+            val tmp = (a rotl 5) + f + e + k +extendedWords[i]
             e = d
             d = c
-            c = leftRotate(b, 30)
+            c = b rotl 30
             b = a
             a = tmp
         }
@@ -70,18 +70,6 @@ class SHA1 {
         return uintArrayOf(h0,h1,h2,h3,h4)
     }
 
-    private fun leftRotate(word: UInt):UInt {
-        val msb = word and (1 shl 31).toUInt()
-        return (word shl 1) or msb
-    }
-
-    private fun leftRotate(word: UInt, amount: Int):UInt {
-        var result = word
-        for (i in 0 until amount) {
-            result = leftRotate(result)
-        }
-        return result
-    }
 
     private fun getWordsFromBytes(bytes:UByteArray):UIntArray {
         val words = UIntArray(bytes.size/4)
@@ -138,11 +126,22 @@ class SHA1 {
     }
 
     private fun getWord(bytes:UByteArray):UInt {
-        return bytes.joinToString("") { padHex(it.toString(16), 2) }.toUInt(16)
+        return bytes.joinToString("") { padWithZeros(it.toString(16), 2) }.toUInt(16)
     }
 
-    private fun padHex(number:String, amount:Int) :String {
+    private fun padWithZeros(number:String, amount:Int) :String {
         return "0".repeat(amount-number.length)+number
+    }
+
+
+    /**
+     * custom infix function that rotates a given UInt by a specified amount
+     */
+    infix fun UInt.rotl(amount:Int):UInt {
+        val distance = amount % UInt.SIZE_BITS //reduce to the minimal amount of shifting
+        val mask = "1".repeat(distance).toUInt(2) shl (UInt.SIZE_BITS-distance)//mask to get the bits that will be shifted out on the left side
+        val pushedOutBits = (this and mask) shr (UInt.SIZE_BITS-distance)//the actual bits that get shifted out, but "normalized" to the LSBs (right side of the word)
+        return (this shl distance) or pushedOutBits
     }
 
 

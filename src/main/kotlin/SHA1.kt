@@ -3,7 +3,7 @@ import kotlin.math.nextUp
 @ExperimentalUnsignedTypes
 class SHA1 {
 
-    fun hash(bytes:UByteArray):UByteArray {
+    private fun hash(bytes:UByteArray):UByteArray {
         val blocks = preprocess(bytes)
 
         val h0 = "67452301".toUInt(16)
@@ -24,7 +24,6 @@ class SHA1 {
         val hashedBytes = hash(bytes)
 
         return hashedBytes.joinToString("") { padWithZeros(it.toString(16), 2) }
-
     }
 
     private fun processBlock(bytes: UByteArray, h:UIntArray):UIntArray {
@@ -137,12 +136,10 @@ class SHA1 {
     /**
      * custom infix function that rotates a given UInt by a specified amount
      */
-    infix fun UInt.rotl(amount:Int):UInt {
+    private infix fun UInt.rotl(amount:Int):UInt {
         val distance = amount % UInt.SIZE_BITS //reduce to the minimal amount of shifting
         val mask = "1".repeat(distance).toUInt(2) shl (UInt.SIZE_BITS-distance)//mask to get the bits that will be shifted out on the left side
         val pushedOutBits = (this and mask) shr (UInt.SIZE_BITS-distance)//the actual bits that get shifted out, but "normalized" to the LSBs (right side of the word)
         return (this shl distance) or pushedOutBits
     }
-
-
 }
